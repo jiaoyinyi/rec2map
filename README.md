@@ -100,20 +100,24 @@ Role = #role{
 
 ### 支持字段类型
 
-| 类型                    | 定义                                                          | 默认值              |
-|-----------------------|-------------------------------------------------------------|------------------|
-| 原子                    | atom()                                                      | undefined        |
-| 整形                    | integer(), pos_integer(), neg_integer(), non_neg_integer()  | 0                |
-| 浮点形                   | float()                                                     | 0.0              |
-| Bool                  | boolean()                                                   | false            |
-| 二进制                   | binary()                                                    | <<>>             | 
-| 记录                    | #record{}, {record,RecName}     | 按record子字段生成默认值  |
-| 基础类型列表                | [base_type()]                                               | []               |
-| 记录类型列表                | [#record{}], [{record,RecName}] | []               |
-| Key为基础类型，Val为基础类型的Map | #{base_type() => base_type()}                               | #{}              |
+| 类型                    | 定义                                                              | 默认值              |
+|-----------------------|-----------------------------------------------------------------|------------------|
+| 原子                    | atom()                                                          | undefined        |
+| 整形                    | integer(), pos_integer(), neg_integer(), non_neg_integer()      | 按类型确定，通常为0       |
+| 浮点形                   | float()                                                         | 0.0              |
+| Bool                  | boolean()                                                       | false            |
+| 二进制                   | binary()                                                        | <<>>             | 
+| 记录                    | #record{}, {record,RecName}                                     | 按record子字段生成默认值  |
+| 基础类型列表                | [base_type()]                                                   | []               |
+| 记录类型列表                | [#record{}], [{record,RecName}]                                 | []               |
+| Key为基础类型，Val为基础类型的Map | #{base_type() => base_type()}                                   | #{}              |
 | Key为基础类型，Val为记录类型的Map | #{base_type() => #record{}}, #{base_type() => {record,RecName}} | #{}              |
-| 基础类型元组                | {base_type(),base_type(),...}                               | 按tuple子字段类型生成默认值 |
-| 基础类型范围类型              | base_type()  | 第一个定义值为默认值       |
+| 基础类型元组                | {base_type(),base_type(),...}                                   | 按tuple子字段类型生成默认值 |
+| 基础类型范围类型              | base_type() \| base_type()                                      | 第一个定义值为默认值       |
+
+#### 基础字段类型 base_type()
+
+atom(), integer(), pos_integer(), neg_integer(), non_neg_integer(), float(), boolean(), binary()
 
 ### 其他
 
