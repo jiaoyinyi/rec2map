@@ -6,7 +6,7 @@ Convert between record and json maps
 
 ### 使用例子
 
-#### 1、定义头文件
+#### 1、给字段定义类型
 
 ```
 -record(role, {
@@ -42,7 +42,7 @@ Convert between record and json maps
 
 #### 2、配置gen_rec.sh参数
 
-要生成头文件路径（`GEN_REC_INC_PATH`）、生成目标文件路径（`GEN_REC_OUT_PATH`）
+要生成的头文件路径（`GEN_REC_INC_PATH`）、生成目标文件路径（`GEN_REC_OUT_PATH`）
 
 #### 3、生成rec_term_data.erl文件
 
