@@ -29,7 +29,7 @@
 -define(OUT_FILE, "rec_term_data.erl").                 %% 生成目标文件
 
 -define(STR(Format, Args), lists:flatten(io_lib:format(Format, Args))).
--define(PRINT(Format, Args), io:format(Format, Args)).
+-define(PRINT(Format, Args), io:format(unicode:characters_to_binary(?STR(Format, Args), utf8))).
 
 %% 是否为基础类型
 -define(BASE_TYPES, [
