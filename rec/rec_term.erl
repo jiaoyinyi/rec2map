@@ -11,7 +11,9 @@
 
 -export([
     rec_to_map/1
+    , rec_field_to_map_field/3
     , map_to_rec/2
+    , map_field_to_rec_field/3
 ]).
 
 %% @doc record转成bson的map结构
@@ -35,6 +37,28 @@ rec_to_map([Info | RecInfo], RecName, RecBinName, Rec, Map) ->
             rec_to_map(RecInfo, RecName, RecBinName, Rec, NewMap);
         {error, Reason} ->
             {error, Reason}
+    end.
+
+%% @doc record字段转成bson的map结构字段
+-spec rec_field_to_map_field(atom(), pos_integer(), term()) -> {ok, map()} | {error, term()}.
+rec_field_to_map_field(RecName, Pos, RecField) ->
+    case Pos > 1 andalso Pos =< rec_term_data:rec_size(RecName) of
+        true ->
+            Info = rec_term_data:rec_field({RecName, Pos}),
+            FieldName = element(1, Info),
+            FieldBinName = element(3, Info),
+            FieldType = element(4, Info),
+            Default = element(5, Info),
+            FieldTerm = get_default(RecField, Default),
+            case to_bson_term(RecName, FieldName, FieldType, FieldTerm) of
+                {ok, BsonTerm} ->
+                    Map = #{FieldBinName => BsonTerm},
+                    {ok, Map};
+                {error, Reason} ->
+                    {error, Reason}
+            end;
+        false ->
+            {error, {rec_pos_err, RecName, Pos}}
     end.
 
 %% @doc bson的map结构转成record
@@ -68,6 +92,20 @@ map_to_rec([Info | RecInfo], RecName, Map, Rec) ->
             ErlTerm = get_default(element(FieldPos, Rec), Default),
             NewRec = setelement(FieldPos, Rec, ErlTerm),
             map_to_rec(RecInfo, RecName, Map, NewRec)
+    end.
+
+%% @doc bson的map结构字段转成record字段
+-spec map_field_to_rec_field(atom(), pos_integer(), map()) -> {ok, term()} | {error, term()}.
+map_field_to_rec_field(RecName, Pos, MapField) ->
+    Info = rec_term_data:rec_field({RecName, Pos}),
+    FieldName = element(1, Info),
+    FieldBinName = element(3, Info),
+    FieldType = element(4, Info),
+    case maps:find(FieldBinName, MapField) of
+        {ok, BsonTerm} ->
+            to_erl_term(RecName, FieldName, FieldType, BsonTerm);
+        error  ->
+            {error, {map_field_err, RecName, Pos, MapField}}
     end.
 
 %% @doc 转成bson的项
@@ -292,4 +330,3 @@ get_rec_default([Info | RecInfo], Rec) ->
     NewTerm = get_default(Term, Default),
     NewRec = setelement(Pos, Rec, NewTerm),
     get_rec_default(RecInfo, NewRec).
-

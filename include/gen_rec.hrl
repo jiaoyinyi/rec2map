@@ -61,6 +61,7 @@
 -record(rec, {
     name                    :: atom()                                                          %% 记录名
     , fields = []           :: [#rec_field{}]                                                  %% 记录字段
+    , size = 0              :: pos_integer()                                                   %% 记录大小
 }).
 
 -endif.

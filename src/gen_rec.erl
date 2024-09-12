@@ -59,7 +59,7 @@ parse_recs(Epp, Acc) ->
 %% @doc 解析记录
 parse_rec(RecName, RecFields) ->
     Fields = parse_rec_fields(RecName, 2, RecFields, []),
-    #rec{name = RecName, fields = Fields}.
+    #rec{name = RecName, fields = Fields, size = length(Fields) + 1}.
 
 %% @doc 解析记录所有字段
 parse_rec_fields(_RecName, _NextPos, [], Fields) ->
@@ -255,14 +255,16 @@ dump(FileNames, Recs, OutPath) ->
     Hrl = dump_hrl(FileNames),
     BinName = dump_bin_name(Recs),
     Rec = dump_rec(Recs),
+    RecSize = dump_rec_size(Recs),
     RecInfo = dump_rec_info(Recs),
-    Data = string:join([Header, Hrl, BinName, Rec, RecInfo], "\n\n"),
+    RecField = dump_rec_field(Recs),
+    Data = string:join([Header, Hrl, BinName, Rec, RecSize, RecInfo, RecField], "\n\n"),
     file:write_file(filename:join(OutPath, ?OUT_FILE), unicode:characters_to_binary(Data, utf8)).
 
 %% @doc 写入模块头部信息
 dump_header() ->
     Format =
-"""%%%-------------------------------------------------------------------
+        """%%%-------------------------------------------------------------------
 %%% @author jiaoyinyi
 %%% @doc
 %%% record转换数据
@@ -274,7 +276,9 @@ dump_header() ->
 -export([
     bin_name/1
     , rec/1
+    , rec_size/1
     , rec_info/1
+    , rec_field/1
 ]).""",
     ?STR(Format, [filename:basename(?OUT_FILE, ".erl")]).
 
@@ -308,6 +312,16 @@ dump_rec([#rec{name = Name} | Recs], Acc) ->
     Str = ?STR("rec(~w) -> #~w{};", [Name, Name]),
     dump_rec(Recs, [Str | Acc]).
 
+%% @doc 写入记录大小
+dump_rec_size(Recs) ->
+    dump_rec_size(Recs, []).
+dump_rec_size([], Acc) ->
+    Str = "rec_size(_RecName) -> exit({rec_size_err, _RecName}).",
+    string:join(lists:reverse([Str | Acc]), "\n");
+dump_rec_size([#rec{name = Name, size = Size} | Recs], Acc) ->
+    Str = ?STR("rec_size(~w) -> ~w;", [Name, Size]),
+    dump_rec_size(Recs, [Str | Acc]).
+
 %% @doc 写入记录信息
 dump_rec_info(Recs) ->
     dump_rec_info(Recs, []).
@@ -326,3 +340,18 @@ dump_rec_fields(_RecName, [], Acc) ->
 dump_rec_fields(RecName, [#rec_field{name = Name, pos = Pos, type = Type, default = Default} | Fields], Acc) ->
     Str = ?STR("{~w,~w,<<\"~w\">>,~w,~ts}", [Name, Pos, Name, Type, Default]),
     dump_rec_fields(RecName, Fields, [Str | Acc]).
+
+%% @doc 写入记录字段信息
+dump_rec_field(Recs) ->
+    dump_rec_field(Recs, []).
+dump_rec_field([], Acc) ->
+    Str = "rec_field(_Key) ->\n    exit({rec_field_err, _Key}).",
+    string:join(lists:reverse([Str | Acc]), "\n");
+dump_rec_field([#rec{name = RecName, fields = Fields} | Recs], Acc) ->
+    NewAcc = dump_rec_field(RecName, Fields, Acc),
+    dump_rec_field(Recs, NewAcc).
+dump_rec_field(_RecName, [], Acc) ->
+    Acc;
+dump_rec_field(RecName, [#rec_field{name = Name, pos = Pos, type = Type, default = Default} | Fields], Acc) ->
+    Str = ?STR("rec_field({~w,~w}) ->\n    {~w,~w,<<\"~w\">>,~w,~ts};", [RecName, Pos, Name, Pos, Name, Type, Default]),
+    dump_rec_field(RecName, Fields, [Str | Acc]).
