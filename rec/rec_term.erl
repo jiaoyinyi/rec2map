@@ -12,7 +12,7 @@
 -export([
     rec_to_map/1
     , rec_field_to_map_field/3
-    , map_to_rec/2
+    , map_to_rec/1, map_to_rec/2
     , map_field_to_rec_field/3
 ]).
 
@@ -61,6 +61,16 @@ rec_field_to_map_field(RecName, Pos, RecField) ->
             {error, {rec_pos_err, RecName, Pos}}
     end.
 
+%% @doc bson的map结构转成record
+-spec map_to_rec(map()) -> {ok, tuple()} | {error, term()}.
+map_to_rec(Map) ->
+    case maps:find(<<"_rec_name">>, Map) of
+        {ok, RecBinName} ->
+            RecName = binary_to_atom(RecBinName, utf8),
+            map_to_rec(rec_term_data:rec_info(RecName), RecName, Map, rec_term_data:rec(RecName));
+        _ ->
+            {error, not_rec_map}
+    end.
 %% @doc bson的map结构转成record
 -spec map_to_rec(atom(), map()) -> {ok, tuple()} | {error, term()}.
 map_to_rec(RecName, Map) ->
