@@ -61,7 +61,7 @@ bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_FLOAT, ?TERM_DATA := Data}) -> Data;
 bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_BOOLEAN, ?TERM_DATA := Data}) -> Data;
 bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_ATOM, ?TERM_DATA := Data}) -> binary_to_atom(Data, utf8);
 bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_BINARY, ?TERM_DATA := Data}) -> Data;
-bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_RECORD, ?TERM_DATA := Data}) -> rec_term:map_to_rec(Data);
+bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_RECORD, ?TERM_DATA := Data}) -> begin {ok, Rec} = rec_term:map_to_rec(Data), Rec end;
 bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_TUPLE, ?TERM_DATA := Data}) -> bson_to_tuple(Data);
 bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_MAP, ?TERM_DATA := Data}) -> maps:fold(fun(K, V, Acc) -> maps:put(erlang:binary_to_term(K), bson_to_term(V), Acc) end, #{}, Data);
 bson_to_term(#{?TERM_TYPE := ?TERM_TYPE_LIST, ?TERM_DATA := Data}) -> lists:map(fun bson_to_term/1, Data);
