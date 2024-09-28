@@ -63,10 +63,7 @@ function make() {
 function gen() {
     make
     cd $ROOT
-    if [[ ! -e "${GEN_REC_OUT_PATH}/rec_term.erl" ]]; then
-        echo -e "$(color green "rec_term.erl不存在，复制rec_term.erl到目标文件路径")"
-        cp "${ROOT}/rec/rec_term.erl" "${GEN_REC_OUT_PATH}/rec_term.erl"
-    fi
+    cp -r "${ROOT}/rec/"* "${GEN_REC_OUT_PATH}"
     echo -e "$(color green "开始record数据文件")"
     erl -noshell -pa ebin -I inc -eval "gen_rec:main(\"${GEN_REC_INC_PATH}\",\"${GEN_REC_OUT_PATH}\")" -s init stop
     if [ $? -ne 0 ]; then
