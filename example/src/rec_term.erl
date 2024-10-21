@@ -15,6 +15,12 @@
     , map_to_rec/1, map_to_rec/2
     , map_field_to_rec_field/3
 ]).
+-export([
+    to_binary/1
+    , to_bson_term/4
+    , to_erl_term/4
+    , is_type/2
+]).
 
 -include("rec_term.hrl").
 
