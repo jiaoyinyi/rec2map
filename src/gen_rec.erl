@@ -279,7 +279,10 @@ dump_header() ->
     , rec_size/1
     , rec_info/1
     , rec_field/1
-]).""",
+]).
+
+-include(\"rec_term.hrl\").
+""",
     ?STR(Format, [filename:basename(?OUT_FILE, ".erl")]).
 
 %% @doc 写入头文件
@@ -338,7 +341,7 @@ dump_rec_fields(RecName, Fields) ->
 dump_rec_fields(_RecName, [], Acc) ->
     ?STR("[~ts]", [string:join(lists:reverse(Acc), ", ")]);
 dump_rec_fields(RecName, [#rec_field{name = Name, pos = Pos, type = Type, default = Default} | Fields], Acc) ->
-    Str = ?STR("{~w,~w,<<\"~w\">>,~w,~ts}", [Name, Pos, Name, Type, Default]),
+    Str = ?STR("#rec_term_field{name = ~w, pos = ~w, bin_name = <<\"~w\">>, type = ~w, default = ~ts}", [Name, Pos, Name, Type, Default]),
     dump_rec_fields(RecName, Fields, [Str | Acc]).
 
 %% @doc 写入记录字段信息
@@ -353,5 +356,5 @@ dump_rec_field([#rec{name = RecName, fields = Fields} | Recs], Acc) ->
 dump_rec_field(_RecName, [], Acc) ->
     Acc;
 dump_rec_field(RecName, [#rec_field{name = Name, pos = Pos, type = Type, default = Default} | Fields], Acc) ->
-    Str = ?STR("rec_field({~w,~w}) ->\n    {~w,~w,<<\"~w\">>,~w,~ts};", [RecName, Pos, Name, Pos, Name, Type, Default]),
+    Str = ?STR("rec_field({~w,~w}) ->\n    #rec_term_field{name = ~w, pos = ~w, bin_name = <<\"~w\">>, type = ~w, default = ~ts};", [RecName, Pos, Name, Pos, Name, Type, Default]),
     dump_rec_field(RecName, Fields, [Str | Acc]).

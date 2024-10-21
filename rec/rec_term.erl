@@ -16,6 +16,8 @@
     , map_field_to_rec_field/3
 ]).
 
+-include("rec_term.hrl").
+
 %% @doc record转成bson的map结构
 -spec rec_to_map(tuple()) -> {ok, map()} | {error, term()}.
 rec_to_map(Rec) when is_tuple(Rec) andalso tuple_size(Rec) > 0 ->
@@ -24,12 +26,8 @@ rec_to_map(Rec) when is_tuple(Rec) andalso tuple_size(Rec) > 0 ->
 rec_to_map([], _RecName, RecBinName, _Rec, Map) ->
     NewMap = maps:put(<<"_rec_name">>, RecBinName, Map),
     {ok, NewMap};
-rec_to_map([Info | RecInfo], RecName, RecBinName, Rec, Map) ->
-    FieldName = element(1, Info),
-    FieldPos = element(2, Info),
-    FieldBinName = element(3, Info),
-    FieldType = element(4, Info),
-    Default = element(5, Info),
+rec_to_map([FieldInfo | RecInfo], RecName, RecBinName, Rec, Map) ->
+    #rec_term_field{name = FieldName, pos = FieldPos, bin_name = FieldBinName, type = FieldType, default = Default} = FieldInfo,
     FieldTerm = get_default(element(FieldPos, Rec), Default),
     case to_bson_term(RecName, FieldName, FieldType, FieldTerm) of
         {ok, BsonTerm} ->
@@ -44,11 +42,8 @@ rec_to_map([Info | RecInfo], RecName, RecBinName, Rec, Map) ->
 rec_field_to_map_field(RecName, Pos, RecField) ->
     case Pos > 1 andalso Pos =< rec_term_data:rec_size(RecName) of
         true ->
-            Info = rec_term_data:rec_field({RecName, Pos}),
-            FieldName = element(1, Info),
-            FieldBinName = element(3, Info),
-            FieldType = element(4, Info),
-            Default = element(5, Info),
+            FieldInfo = rec_term_data:rec_field({RecName, Pos}),
+            #rec_term_field{name = FieldName, bin_name = FieldBinName, type = FieldType, default = Default} = FieldInfo,
             FieldTerm = get_default(RecField, Default),
             case to_bson_term(RecName, FieldName, FieldType, FieldTerm) of
                 {ok, BsonTerm} ->
@@ -83,11 +78,8 @@ map_to_rec(RecName, Map) ->
     end.
 map_to_rec([], _RecName, _Map, Rec) ->
     {ok, Rec};
-map_to_rec([Info | RecInfo], RecName, Map, Rec) ->
-    FieldName = element(1, Info),
-    FieldPos = element(2, Info),
-    FieldBinName = element(3, Info),
-    FieldType = element(4, Info),
+map_to_rec([FieldInfo | RecInfo], RecName, Map, Rec) ->
+    #rec_term_field{name = FieldName, pos = FieldPos, bin_name = FieldBinName, type = FieldType, default = Default} = FieldInfo,
     case maps:find(FieldBinName, Map) of
         {ok, BsonTerm} ->
             case to_erl_term(RecName, FieldName, FieldType, BsonTerm) of
@@ -98,7 +90,6 @@ map_to_rec([Info | RecInfo], RecName, Map, Rec) ->
                     {error, Reason}
             end;
         error ->
-            Default = element(5, Info),
             ErlTerm = get_default(element(FieldPos, Rec), Default),
             NewRec = setelement(FieldPos, Rec, ErlTerm),
             map_to_rec(RecInfo, RecName, Map, NewRec)
@@ -107,10 +98,8 @@ map_to_rec([Info | RecInfo], RecName, Map, Rec) ->
 %% @doc bson的map结构字段转成record字段
 -spec map_field_to_rec_field(atom(), pos_integer(), map()) -> {ok, term()} | {error, term()}.
 map_field_to_rec_field(RecName, Pos, MapField) ->
-    Info = rec_term_data:rec_field({RecName, Pos}),
-    FieldName = element(1, Info),
-    FieldBinName = element(3, Info),
-    FieldType = element(4, Info),
+    FieldInfo = rec_term_data:rec_field({RecName, Pos}),
+    #rec_term_field{name = FieldName, bin_name = FieldBinName, type = FieldType} = FieldInfo,
     case maps:find(FieldBinName, MapField) of
         {ok, BsonTerm} ->
             to_erl_term(RecName, FieldName, FieldType, BsonTerm);
@@ -120,7 +109,7 @@ map_field_to_rec_field(RecName, Pos, MapField) ->
 
 %% @doc 转成bson的项
 to_bson_term(_RecName, _FieldName, atom, Data) when is_atom(Data) ->
-    {ok, atom_to_binary(Data)};
+    {ok, atom_to_binary(Data, utf8)};
 to_bson_term(_RecName, _FieldName, integer, Data) when is_integer(Data) ->
     {ok, Data};
 to_bson_term(_RecName, _FieldName, pos_integer, Data) when is_integer(Data) andalso Data > 0 ->
@@ -199,7 +188,7 @@ to_bson_term(RecName, FieldName, Type, Data) ->
 
 %% 转成erlang的项
 to_erl_term(_RecName, _FieldName, atom, Data) when is_binary(Data) ->
-    {ok, binary_to_atom(Data)};
+    {ok, binary_to_atom(Data, utf8)};
 to_erl_term(_RecName, _FieldName, integer, Data) when is_integer(Data) ->
     {ok, Data};
 to_erl_term(RecName, FieldName, integer, Data) when is_binary(Data) ->
@@ -307,7 +296,7 @@ is_type(_Type, _Data) ->
 
 %% @doc 转成二进制
 to_binary(Data) when is_atom(Data) ->
-    atom_to_binary(Data);
+    atom_to_binary(Data, utf8);
 to_binary(Data) when is_integer(Data) ->
     integer_to_binary(Data);
 to_binary(Data) when is_float(Data) ->
@@ -333,9 +322,7 @@ get_default(Data, _Default) ->
 %% @doc 获取记录默认值
 get_rec_default([], Rec) ->
     Rec;
-get_rec_default([Info | RecInfo], Rec) ->
-    Pos = element(2, Info),
-    Default = element(5, Info),
+get_rec_default([#rec_term_field{pos = Pos, default = Default} | RecInfo], Rec) ->
     Term = element(Pos, Rec),
     NewTerm = get_default(Term, Default),
     NewRec = setelement(Pos, Rec, NewTerm),
