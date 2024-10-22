@@ -20,6 +20,7 @@
     , to_bson_term/4
     , to_erl_term/4
     , is_type/2
+    , get_default/2
 ]).
 
 -include("rec_term.hrl").

@@ -44,7 +44,7 @@
 
 %% 要去除的头文件
 -define(EXCLUDE_HRLS, [
-    "rec_term.hrl"
+    "rec_term.hrl", "rec_diff.hrl"
 ]).
 %% 要去除的记录
 -define(EXCLUDE_RECORDS, [

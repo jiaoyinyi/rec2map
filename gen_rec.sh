@@ -64,7 +64,7 @@ function gen() {
     make
     cd $ROOT
     cp -r "${ROOT}/rec/"*.erl "${GEN_REC_OUT_PATH}"
-    cp -r "${ROOT}/rec/rec_term.hrl" "${GEN_REC_INC_PATH}"
+    cp -r "${ROOT}/rec/"*.hrl "${GEN_REC_INC_PATH}"
     echo -e "$(color green "开始record数据文件")"
     erl -noshell -pa ebin -I inc -eval "gen_rec:main(\"${GEN_REC_INC_PATH}\",\"${GEN_REC_OUT_PATH}\")" -s init stop
     if [ $? -ne 0 ]; then

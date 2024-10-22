@@ -18,16 +18,4 @@
     , default                :: term()                     %% 默认值
 }).
 
--define(REC_TERM_DIFF_OP_ADD, add).
--define(REC_TERM_DIFF_OP_DELETE, delete).
--define(REC_TERM_DIFF_OP_UPDATE, update).
-
--define(REC_TERM_IS_BASE_TYPE(Term), (is_integer(Term) orelse is_float(Term) orelse is_boolean(Term) orelse is_atom(Term) orelse is_binary(Term))).
-
--record(rec_term_diff, {
-    op                       :: add | delete | update      %% 操作
-    , old                    :: term()                     %% 旧值
-    , new                    :: term()                     %% 新值
-}).
-
 -endif.
