@@ -123,3 +123,95 @@ atom(), integer(), pos_integer(), neg_integer(), non_neg_integer(), float(), boo
 
 1、剔除不生成的头文件 在`gen_rec.hrl`的`EXCLUDE_HRLS`宏配置  
 2、剔除不生成的记录 在`gen_rec.hrl`的`EXCLUDE_RECORDS`宏配置  
+
+### 支持差异对比
+
+#### 1、对比差异（rec_diff:diff/3、rec_diff:diff/4）
+```
+2> Role = rec_term_data:rec(role).
+#role{rid = undefined,srv_id = undefined,name = <<>>,
+      lev = 1,partners = [],m_package = undefined}
+3> NewRole = Role#role{partners = [#partner{id = 1, bid = 2}], m_package = #m_package{packages = #{1 => #package{type = 1, items = [#item{id = 1, bid = 2}], capacity = 10, size = 1}}}}.
+#role{rid = undefined,srv_id = undefined,name = <<>>,
+      lev = 1,
+      partners = [#partner{id = 1,bid = 2}],
+      m_package = #m_package{packages = #{1 =>
+                                              #package{type = 1,
+                                                       items = [#item{id = 1,bid = 2}],
+                                                       capacity = 10,size = 1}}}}
+4> rec_diff:diff(role, Role, NewRole).
+{ok,#{<<"m_package">> =>
+          #{<<"packages">> =>
+                #{<<"1">> =>
+                      {rec_diff,add,undefined,
+                                #{<<"_rec_name">> => <<"package">>,<<"capacity">> => 10,
+                                  <<"items">> =>
+                                      [#{<<"_rec_name">> => <<"item">>,<<"bid">> => 2,<<"id">> => 1}],
+                                  <<"size">> => 1,<<"type">> => 1}}}},
+      <<"partners">> =>
+          #{0 =>
+                {rec_diff,add,undefined,
+                          #{<<"_rec_name">> => <<"partner">>,<<"bid">> => 2,
+                            <<"id">> => 1}}}}}
+```
+* **对比差异支持对比最大层级**，默认最大层级无限制，`rec_diff:diff(role, Role, NewRole, #{max_layer => 2}).` 该例子设置最大层级为2。
+
+#### 2、差异合并（rec_diff:merge/1、rec_diff:merge/2）
+```
+NewRole2 = NewRole#role{srv_id = <<"test">>, partners = [#partner{id = 2}], m_package = #m_package{packages = #{1 => #package{type = 1, items = [#item{id = 1, bid = 2}, #item{id = 2, bid = 3}], capacity = 1
+0, size = 2}}}}.
+#role{rid = undefined,srv_id = <<"test">>,name = <<>>,
+      lev = 1,
+      partners = [#partner{id = 2,bid = undefined}],
+      m_package = #m_package{packages = #{1 =>
+                                              #package{type = 1,
+                                                       items = [#item{id = 1,bid = 2},#item{id = 2,bid = 3}],
+                                                       capacity = 10,size = 2}}}}
+8> {ok, DiffMap2} = rec_diff:diff(role, NewRole, NewRole2).
+{ok,#{<<"m_package">> =>
+          #{<<"packages">> =>
+                #{<<"1">> =>
+                      #{<<"items">> =>
+                            #{1 =>
+                                  {rec_diff,add,undefined,
+                                            #{<<"_rec_name">> => <<"item">>,<<"bid">> => 3,
+                                              <<"id">> => 2}}},
+                        <<"size">> => {rec_diff,update,1,2}}}},
+      <<"partners">> =>
+          #{0 =>
+                #{<<"bid">> => {rec_diff,update,2,1},
+                  <<"id">> => {rec_diff,update,1,2}}},
+      <<"srv_id">> => {rec_diff,update,<<>>,<<"test">>}}}
+10> NewDiffMap = rec_diff:merge(DiffMap,DiffMap2).
+#{<<"m_package">> =>
+      #{<<"packages">> =>
+            #{<<"1">> =>
+                  {rec_diff,add,undefined,
+                            #{<<"_rec_name">> => <<"package">>,<<"capacity">> => 10,
+                              <<"items">> =>
+                                  [#{<<"_rec_name">> => <<"item">>,<<"bid">> => 2,<<"id">> => 1},
+                                   #{<<"_rec_name">> => <<"item">>,<<"bid">> => 3,<<"id">> => 2}],
+                              <<"size">> => 2,<<"type">> => 1}}}},
+  <<"partners">> =>
+      #{0 =>
+            {rec_diff,add,undefined,
+                      #{<<"_rec_name">> => <<"partner">>,<<"bid">> => 1,
+                        <<"id">> => 2}}},
+  <<"srv_id">> => {rec_diff,update,<<>>,<<"test">>}}
+```
+
+#### 3、差异转mongodb更新数据（rec_diff:mongo_update/1）
+```
+12> rec_diff:mongo_update(NewDiffMap).
+#{<<"$set">> =>
+      #{<<"m_package.packages.1">> =>
+            #{<<"_rec_name">> => <<"package">>,<<"capacity">> => 10,
+              <<"items">> =>
+                  [#{<<"_rec_name">> => <<"item">>,<<"bid">> => 2,<<"id">> => 1},
+                   #{<<"_rec_name">> => <<"item">>,<<"bid">> => 3,<<"id">> => 2}],
+              <<"size">> => 2,<<"type">> => 1},
+        <<"partners.0">> =>
+            #{<<"_rec_name">> => <<"partner">>,<<"bid">> => 1,
+              <<"id">> => 2},
+        <<"srv_id">> => <<"test">>}}
+```
