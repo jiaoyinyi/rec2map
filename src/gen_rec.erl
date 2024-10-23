@@ -87,8 +87,11 @@ get_field_name({_, _, Name}) ->
 %% @doc 获取字段类型
 get_field_type(RecName, FieldName, Type) ->
     case do_get_field_type(Type) of
+        {error, undefined_type} ->
+            ?WARN("记录~w的~w字段为未定义字段类型：~w，强制转成term类型处理", [RecName, FieldName, Type]),
+            term;
         {error, _Reason} ->
-            ?PRINT("记录~w的~w字段为非法字段类型：~w", [RecName, FieldName, Type]),
+            ?ERR("记录~w的~w字段为非法字段类型：~w，原因：~w", [RecName, FieldName, Type, _Reason]),
             exit(1);
         FieldType ->
             FieldType
@@ -127,7 +130,7 @@ do_get_field_type({type, _, union, Unions}) -> %% 范围 worker | supervisor
             {union, Type, Values}
     end;
 do_get_field_type(_Type) ->
-    {error, type_err}.
+    {error, undefined_type}.
 
 %% @doc 获取元组每项类型
 get_tuple_elem_types(Types) ->
@@ -178,8 +181,6 @@ do_get_field_default(boolean, undefined) ->
     "false";
 do_get_field_default(binary, undefined) ->
     "<<>>";
-do_get_field_default(integer, {integer, _, Default}) ->
-    ?STR("~w", [Default]);
 do_get_field_default(pos_integer, {integer, _, Default}) when Default > 0 ->
     ?STR("~w", [Default]);
 do_get_field_default(neg_integer, {integer, _, Default}) when Default < 0 ->
@@ -192,7 +193,7 @@ do_get_field_default(binary, {bin, _, [{bin_element, _, {string, _, Str}, defaul
     ?STR("<<\"~ts\">>", [Str]);
 do_get_field_default(binary, {bin, _, [{bin_element, _, {string, _, Str}, default, [utf8]}]}) ->
     ?STR("<<\"~ts\"/utf8>>", [Str]);
-do_get_field_default(Type, {Type, _, Default}) when ?IS_BASE_TYPE(Default) ->
+do_get_field_default(Type, {Type, _, Default}) when ?IS_BASE_TYPE(Type) ->
     ?STR("~w", [Default]);
 do_get_field_default({record, RecName}, undefined) -> %% 记录默认值 undefined
     ?STR("{record,~w}", [RecName]);
@@ -221,6 +222,8 @@ do_get_field_default({union, _, Values}, {_, _, Default}) -> %% 范围默认值
         _ ->
             {error, default_err}
     end;
+do_get_field_default(term, _Default) ->
+    "undefined";
 do_get_field_default(_Type, _Default) ->
     {error, default_err}.
 

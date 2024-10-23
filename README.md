@@ -113,7 +113,8 @@ Role = #role{
 | Key为基础类型，Val为基础类型的Map | #{base_type() => base_type()}                                   | #{}              |
 | Key为基础类型，Val为记录类型的Map | #{base_type() => #record{}}, #{base_type() => {record,RecName}} | #{}              |
 | 基础类型元组                | {base_type(),base_type(),...}                                   | 按tuple子字段类型生成默认值 |
-| 基础类型范围类型              | base_type() \| base_type()                                      | 第一个定义值为默认值       |
+| 基础类型范围类型              | base_type() \| base_type()      | 第一个定义值为默认值       |
+| 其他类型(兼容处理)            | term()                                                          | undefined        |
 
 #### 基础字段类型 base_type()
 
@@ -123,6 +124,7 @@ atom(), integer(), pos_integer(), neg_integer(), non_neg_integer(), float(), boo
 
 1、剔除不生成的头文件 在`gen_rec.hrl`的`EXCLUDE_HRLS`宏配置  
 2、剔除不生成的记录 在`gen_rec.hrl`的`EXCLUDE_RECORDS`宏配置  
+3、未支持的字段类型会自动转成term()类型兼容处理，默认值为undefined，且该类型在反序列化不会自动版本转换  
 
 ### 支持差异对比
 

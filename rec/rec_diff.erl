@@ -81,19 +81,18 @@ diff_rec_field(RecName, OldRec, NewRec, State, Pos, Size, DiffMap) ->
 
 diff_term(_RecName, _FieldInfo, undefined, undefined, _State) ->
     same;
-diff_term(RecName, FieldInfo = #rec_term_field{default = Default}, undefined, NewTerm, State) ->
-    OldTerm = rec_term:get_default(undefined, Default),
-    diff_term(RecName, FieldInfo, OldTerm, NewTerm, State);
-diff_term(RecName, FieldInfo = #rec_term_field{default = Default}, OldTerm, undefined, State) ->
-    NewTerm = rec_term:get_default(undefined, Default),
-    diff_term(RecName, FieldInfo, OldTerm, NewTerm, State);
-diff_term(_RecName, #rec_term_field{type = {record, FieldRecName}}, OldTerm, NewTerm, State) ->
+diff_term(RecName, FieldInfo = #rec_term_field{default = Default}, OldTerm0, NewTerm0, State) ->
+    OldTerm = rec_term:get_default(OldTerm0, Default),
+    NewTerm = rec_term:get_default(NewTerm0, Default),
+    do_diff_term(RecName, FieldInfo, OldTerm, NewTerm, State).
+
+do_diff_term(_RecName, #rec_term_field{type = {record, FieldRecName}}, OldTerm, NewTerm, State) ->
     diff_rec(FieldRecName, OldTerm, NewTerm, State);
-diff_term(RecName, FieldInfo = #rec_term_field{type = {map, _KeyType, _ValType}}, OldTerm, NewTerm, State) ->
+do_diff_term(RecName, FieldInfo = #rec_term_field{type = {map, _KeyType, _ValType}}, OldTerm, NewTerm, State) ->
     diff_map(RecName, FieldInfo, OldTerm, NewTerm, State);
-diff_term(RecName, FieldInfo = #rec_term_field{type = {list, _ValType}}, OldTerm, NewTerm, State) ->
+do_diff_term(RecName, FieldInfo = #rec_term_field{type = {list, _ValType}}, OldTerm, NewTerm, State) ->
     diff_list(RecName, FieldInfo, OldTerm, NewTerm, State);
-diff_term(RecName, FieldInfo, OldTerm, NewTerm, State) ->
+do_diff_term(RecName, FieldInfo, OldTerm, NewTerm, State) ->
     diff_base(RecName, FieldInfo, OldTerm, NewTerm, State).
 
 diff_base(RecName, #rec_term_field{name = FieldName, type = FieldType}, OldTerm, NewTerm, _State) ->

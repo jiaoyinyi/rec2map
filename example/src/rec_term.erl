@@ -190,6 +190,10 @@ to_bson_term(RecName, FieldName, {union, Type, Values}, Data) ->
         _Class:_Reason ->
             {error, {field_err, RecName, FieldName, {union, Type, Values}, Data, {_Class, _Reason}}}
     end;
+to_bson_term(_RecName, _FieldName, term, undefined) ->
+    {ok, <<"undefined"/utf8>>};
+to_bson_term(_RecName, _FieldName, term, Data) ->
+    {ok, term_to_binary(Data)};
 to_bson_term(RecName, FieldName, Type, Data) ->
     {error, {field_err, RecName, FieldName, Type, Data}}.
 
@@ -274,6 +278,10 @@ to_erl_term(RecName, FieldName, {union, Type, Values}, Data) ->
         _Class:_Reason ->
             {error, {field_err, RecName, FieldName, {union, Type, Values}, Data, {_Class, _Reason}}}
     end;
+to_erl_term(_RecName, _FieldName, term, <<"undefined"/utf8>>) ->
+    {ok, undefined};
+to_erl_term(_RecName, _FieldName, term, Data) ->
+    {ok, binary_to_term(Data)};
 to_erl_term(RecName, FieldName, Type, Data) ->
     {error, {field_err, RecName, FieldName, Type, Data}}.
 
@@ -298,6 +306,8 @@ is_type({record, RecName}, Data) ->
     is_record(Data, RecName);
 is_type({union, Type, _Values}, Data) ->
     is_type(Type, Data);
+is_type(term, _Data) ->
+    true;
 is_type(_Type, _Data) ->
     false.
 
