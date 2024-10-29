@@ -129,6 +129,8 @@ do_get_field_type({type, _, union, Unions}) -> %% 范围 worker | supervisor
         {Type, Values} ->
             {union, Type, Values}
     end;
+do_get_field_type({type, _, term, _}) -> %% 任意类型
+    term;
 do_get_field_type(_Type) ->
     {error, undefined_type}.
 
@@ -222,7 +224,7 @@ do_get_field_default({union, _, Values}, {_, _, Default}) -> %% 范围默认值
         _ ->
             {error, default_err}
     end;
-do_get_field_default(term, _Default) ->
+do_get_field_default(term, _Default) -> %% 任意类型
     "undefined";
 do_get_field_default(_Type, _Default) ->
     {error, default_err}.
