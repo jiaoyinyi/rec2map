@@ -193,7 +193,7 @@ to_bson_term(RecName, FieldName, {union, Type, Values}, Data) ->
 to_bson_term(_RecName, _FieldName, term, undefined) ->
     {ok, <<"undefined"/utf8>>};
 to_bson_term(_RecName, _FieldName, term, Data) ->
-    {ok, term_to_binary(Data)};
+    {ok, {data, binary, term_to_binary(Data)}};
 to_bson_term(RecName, FieldName, Type, Data) ->
     {error, {field_err, RecName, FieldName, Type, Data}}.
 
@@ -280,7 +280,7 @@ to_erl_term(RecName, FieldName, {union, Type, Values}, Data) ->
     end;
 to_erl_term(_RecName, _FieldName, term, <<"undefined"/utf8>>) ->
     {ok, undefined};
-to_erl_term(_RecName, _FieldName, term, Data) ->
+to_erl_term(_RecName, _FieldName, term, {data, binary, Data}) ->
     {ok, binary_to_term(Data)};
 to_erl_term(RecName, FieldName, Type, Data) ->
     {error, {field_err, RecName, FieldName, Type, Data}}.

@@ -50,7 +50,7 @@ rec_info(package) ->
 rec_info(partner) ->
     [#rec_term_field{name = id, pos = 2, bin_name = <<"id">>, type = pos_integer, default = 1}, #rec_term_field{name = bid, pos = 3, bin_name = <<"bid">>, type = pos_integer, default = 1}];
 rec_info(role) ->
-    [#rec_term_field{name = rid, pos = 2, bin_name = <<"rid">>, type = non_neg_integer, default = 0}, #rec_term_field{name = srv_id, pos = 3, bin_name = <<"srv_id">>, type = binary, default = <<>>}, #rec_term_field{name = name, pos = 4, bin_name = <<"name">>, type = binary, default = <<>>}, #rec_term_field{name = lev, pos = 5, bin_name = <<"lev">>, type = pos_integer, default = 1}, #rec_term_field{name = partners, pos = 6, bin_name = <<"partners">>, type = {list,{record,partner}}, default = []}, #rec_term_field{name = m_package, pos = 7, bin_name = <<"m_package">>, type = {record,m_package}, default = {record,m_package}}];
+    [#rec_term_field{name = rid, pos = 2, bin_name = <<"rid">>, type = non_neg_integer, default = 0}, #rec_term_field{name = srv_id, pos = 3, bin_name = <<"srv_id">>, type = binary, default = <<>>}, #rec_term_field{name = name, pos = 4, bin_name = <<"name">>, type = binary, default = <<>>}, #rec_term_field{name = lev, pos = 5, bin_name = <<"lev">>, type = term, default = undefined}, #rec_term_field{name = partners, pos = 6, bin_name = <<"partners">>, type = {list,{record,partner}}, default = []}, #rec_term_field{name = m_package, pos = 7, bin_name = <<"m_package">>, type = {record,m_package}, default = {record,m_package}}];
 rec_info(_RecName) ->
     exit({rec_info_err, _RecName}).
 
@@ -79,7 +79,7 @@ rec_field({role,3}) ->
 rec_field({role,4}) ->
     #rec_term_field{name = name, pos = 4, bin_name = <<"name">>, type = binary, default = <<>>};
 rec_field({role,5}) ->
-    #rec_term_field{name = lev, pos = 5, bin_name = <<"lev">>, type = pos_integer, default = 1};
+    #rec_term_field{name = lev, pos = 5, bin_name = <<"lev">>, type = term, default = undefined};
 rec_field({role,6}) ->
     #rec_term_field{name = partners, pos = 6, bin_name = <<"partners">>, type = {list,{record,partner}}, default = []};
 rec_field({role,7}) ->

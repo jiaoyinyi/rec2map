@@ -14,7 +14,7 @@
     rid                     :: non_neg_integer()
     , srv_id                :: binary()
     , name = <<>>           :: binary()
-    , lev = 1               :: pos_integer()
+    , lev = 1               :: term()
     , partners = []         :: [{record, partner}]
     , m_package             :: {record, m_package}
 }).
